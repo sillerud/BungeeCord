@@ -30,4 +30,19 @@ public class ServerPing
      * Max amount of players the server will allow.
      */
     private final int maxPlayers;
+
+    /**
+     * Converts this object to a {@link NewServerPing}, as used by 1.7.2
+     * clients.
+     *
+     * @return A {@link NewServerPing} object with all data contained in this
+     * object. Changes are not written back.
+     */
+    public NewServerPing toNewServerPing()
+    {
+        return new NewServerPing(
+                new NewServerPing.Protocol( gameVersion, protocolVersion ),
+                new NewServerPing.Players( maxPlayers, currentPlayers ),
+                motd, null );
+    }
 }
