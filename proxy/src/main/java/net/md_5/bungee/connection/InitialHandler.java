@@ -1,9 +1,6 @@
 package net.md_5.bungee.connection;
 
 import com.google.common.base.Preconditions;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
@@ -18,9 +15,15 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.md_5.bungee.*;
+import net.md_5.bungee.BungeeCord;
+import net.md_5.bungee.EncryptionUtil;
+import net.md_5.bungee.PacketConstants;
+import net.md_5.bungee.UserConnection;
+import net.md_5.bungee.Util;
+import net.md_5.bungee.api.AbstractReconnectHandler;
 import net.md_5.bungee.api.Callback;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.NewServerPing;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.ServerPing;
 import net.md_5.bungee.api.config.ListenerInfo;
@@ -28,20 +31,37 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.LoginEvent;
+import net.md_5.bungee.api.event.PlayerHandshakeEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.event.ProxyPingEvent;
 import net.md_5.bungee.http.HttpClient;
-import net.md_5.bungee.netty.*;
+import net.md_5.bungee.netty.ChannelWrapper;
+import net.md_5.bungee.netty.HandlerBoss;
+import net.md_5.bungee.netty.PacketHandler;
+import net.md_5.bungee.netty.PipelineUtils;
 import net.md_5.bungee.netty.decoders.CipherDecoder;
-import net.md_5.bungee.netty.encoders.CipherEncoder;
 import net.md_5.bungee.netty.decoders.PacketDecoder;
+import net.md_5.bungee.netty.encoders.CipherEncoder;
 import net.md_5.bungee.protocol.Forge;
 import net.md_5.bungee.protocol.MinecraftInput;
 import net.md_5.bungee.protocol.Vanilla;
-import net.md_5.bungee.protocol.packet.*;
-import net.md_5.bungee.api.AbstractReconnectHandler;
-import net.md_5.bungee.api.event.PlayerHandshakeEvent;
-import net.md_5.bungee.protocol.packet.protocolhack.*;
+import net.md_5.bungee.protocol.packet.DefinedPacket;
+import net.md_5.bungee.protocol.packet.Packet1Login;
+import net.md_5.bungee.protocol.packet.Packet2Handshake;
+import net.md_5.bungee.protocol.packet.PacketCDClientStatus;
+import net.md_5.bungee.protocol.packet.PacketFAPluginMessage;
+import net.md_5.bungee.protocol.packet.PacketFCEncryptionResponse;
+import net.md_5.bungee.protocol.packet.PacketFDEncryptionRequest;
+import net.md_5.bungee.protocol.packet.PacketFEPing;
+import net.md_5.bungee.protocol.packet.PacketFFKick;
+import net.md_5.bungee.protocol.packet.protocolhack.PacketEncryptionRequest;
+import net.md_5.bungee.protocol.packet.protocolhack.PacketEncryptionResponse;
+import net.md_5.bungee.protocol.packet.protocolhack.PacketHandshake;
+import net.md_5.bungee.protocol.packet.protocolhack.PacketLoginStart;
+import net.md_5.bungee.protocol.packet.protocolhack.PacketLoginSuccess;
+import net.md_5.bungee.protocol.packet.protocolhack.PacketPing;
+import net.md_5.bungee.protocol.packet.protocolhack.PacketPingRequest;
+import net.md_5.bungee.protocol.packet.protocolhack.PacketPingResponse;
 
 @RequiredArgsConstructor
 public class InitialHandler extends PacketHandler implements PendingConnection
@@ -177,22 +197,46 @@ public class InitialHandler extends PacketHandler implements PendingConnection
     @Override
     public void handle(PacketPingRequest pingRequest)
     {
-        JsonObject result = new JsonObject();
-        JsonObject version = new JsonObject();
-        version.add( "name", new JsonPrimitive( "1.7.2" ) );
-        version.add( "protocol", new JsonPrimitive( 4 ) );
-        JsonObject players = new JsonObject();
-        players.add( "max", new JsonPrimitive( listener.getMaxPlayers() ) );
-        players.add( "online", new JsonPrimitive( bungee.getOnlineCount() ) );
-        players.add( "sample", new JsonArray() ); // empty array
-        result.add( "version", version );
-        result.add( "players", players );
-        result.add( "description", new JsonPrimitive( listener.getMultilineMotd().replaceAll( "\\\\n", "\n" ) ) );
-        String favicon = bungee.getFavicon();
-        if ( favicon != null ) {
-            result.add( "favicon", new JsonPrimitive( favicon ) );
+        ServerInfo forced = AbstractReconnectHandler.getForcedHost( this );
+        final String motd = ( forced != null ) ? forced.getMotd() : listener.getMotd();
+        final Callback<NewServerPing> pingBack = new Callback<NewServerPing>()
+        {
+            @Override
+            public void done(NewServerPing result, Throwable error)
+            {
+                if ( error != null )
+                {
+                    result = new NewServerPing( new NewServerPing.Protocol( "-1", -1 ),
+                            new NewServerPing.Players( -1, -1 ),
+                            "Error pinging remote server: " + Util.exception( error ),
+                            null );
+                }
+
+                result = bungee.getPluginManager().callEvent( new ProxyPingEvent( InitialHandler.this, result ) ).getNewResponse();
+
+                unsafe().sendPacket( new PacketPingResponse( result.toJson().toString() ) );
+            }
+        };
+
+        if ( forced != null && listener.isPingPassthrough() )
+        {
+            forced.ping( new Callback<ServerPing>() //TODO: interfaces?
+            {
+                @Override
+                public void done(ServerPing result, Throwable error)
+                {
+                    pingBack.done( result.toNewServerPing(), error );
+                }
+            } );
+        } else
+        {
+            pingBack.done( new NewServerPing(
+                    new NewServerPing.Protocol( "1.7.2", 4 ), //TODO: There must be a better solution to this
+                    new NewServerPing.Players( listener.getMaxPlayers(), bungee.getOnlineCount() ),
+                    motd,
+                    bungee.getFavicon() ),
+                    null );
         }
-        unsafe().sendPacket( new PacketPingResponse( result.toString() ) );
     }
 
     @Override
