@@ -52,4 +52,13 @@ public class ProxyPingEvent extends Event
         this.newResponse = newResponse;
         this.isNewProtocol = true;
     }
+
+    public void setResponse(final ServerPing resp)
+    {
+        this.response = resp;
+        if ( this.isNewProtocol )
+        {
+            this.newResponse = resp.toNewServerPing();
+        }
+    }
 }
