@@ -43,6 +43,6 @@ public class ServerPing
         return new NewServerPing(
                 new NewServerPing.Protocol( gameVersion, protocolVersion ),
                 new NewServerPing.Players( maxPlayers, currentPlayers ),
-                motd, null );
+                null, motd, null );
     }
 }

@@ -209,7 +209,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                 if ( error != null )
                 {
                     result = new NewServerPing( new NewServerPing.Protocol( "-1", -1 ),
-                            new NewServerPing.Players( -1, -1 ),
+                            new NewServerPing.Players( -1, -1 ), null,
                             "Error pinging remote server: " + Util.exception( error ),
                             null );
                 }
@@ -234,7 +234,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
         {
             pingBack.done( new NewServerPing(
                     new NewServerPing.Protocol( "1.7.2", 4 ), //TODO: There must be a better solution to this
-                    new NewServerPing.Players( listener.getMaxPlayers(), bungee.getOnlineCount() ), motd, bungee.getFavicon() ), null );
+                    new NewServerPing.Players( listener.getMaxPlayers(), bungee.getOnlineCount() ), null, motd, bungee.getFavicon() ), null );
         }
         BungeeCord.getInstance().getConnectionThrottle().unthrottle( getAddress().getAddress() );
     }

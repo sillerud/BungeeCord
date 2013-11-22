@@ -3,6 +3,7 @@ package net.md_5.bungee.api;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,7 +38,20 @@ public class NewServerPing
 
         private int max;
         private int online;
+
     }
+
+    @Data
+    @AllArgsConstructor
+    public static class PlayerInfo
+    {
+
+        private String name;
+        private String id;
+    }
+
+    private List<PlayerInfo> sample;
+
     private String description;
     private String favicon;
 
@@ -72,10 +86,33 @@ public class NewServerPing
         jsonVersion.add( "protocol", new JsonPrimitive( version.getProtocol() ) );
         jsonPlayers.add( "max", new JsonPrimitive( players.getMax() ) );
         jsonPlayers.add( "online", new JsonPrimitive( players.getOnline() ) );
-        jsonPlayers.add( "sample", new JsonArray() ); // empty array
+
+        if ( sample != null )
+        {
+
+            JsonArray jsonPlayerInfo = new JsonArray();
+
+            for ( PlayerInfo playerInfo : sample ) {
+
+                JsonObject jsonPlayerSample = new JsonObject();
+                jsonPlayerSample.add( "name", new JsonPrimitive( playerInfo.getName() ) );
+                jsonPlayerSample.add( "id", new JsonPrimitive( playerInfo.getId() ) );
+                jsonPlayerInfo.add(jsonPlayerSample);
+
+            }
+
+            jsonPlayers.add( "sample", jsonPlayerInfo );
+
+        }
+        else
+        {
+            jsonPlayers.add( "sample", new JsonArray() );
+        }
+
         json.add( "version", jsonVersion );
         json.add( "players", jsonPlayers );
         json.add( "description", new JsonPrimitive( description.replaceAll( "\\\\n", "\n" ) ) );
+
         if ( favicon != null )
         {
             json.add( "favicon", new JsonPrimitive( favicon ) );
