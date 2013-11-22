@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * Represents the standard list data returned by opening a server in the
@@ -13,7 +12,6 @@ import lombok.NoArgsConstructor;
  * BungeeCord 1.7.2; representing the new ping method)
  */
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class NewServerPing
 {
