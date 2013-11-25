@@ -79,6 +79,7 @@ public class NewServerPing
             {
                 JsonObject user = new JsonObject();
                 user.add( "name", new JsonPrimitive( str ) );
+                user.add("id", new JsonPrimitive( UUID.randomUUID().toString() ) );
                 samplePlayers.add( user );
             }
         }
