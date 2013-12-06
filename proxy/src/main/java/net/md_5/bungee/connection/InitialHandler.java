@@ -179,7 +179,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
     public void handle(PacketPingRequest pingRequest)
     {
         ServerInfo forced = AbstractReconnectHandler.getForcedHost( this );
-        final String motd = ( forced != null ) ? forced.getMotd() : listener.getMultilineMotd();
+        final String motd = ( forced != null ) ? forced.getMultilineMotd() : listener.getMultilineMotd();
         final Callback<NewServerPing> pingBack = new Callback<NewServerPing>()
         {
             @Override
