@@ -15,17 +15,11 @@ public class BlockActionRewriter extends PacketRewriter
     @Override
     public void rewriteServerToClient(ByteBuf in, ByteBuf out)
     {
-        int x = in.readInt();
-        short y = in.readShort();
-        int z = in.readInt();
-        byte b1 = in.readByte();
-        byte b2 = in.readByte();
+        // x - int, y - short, z - int, 2 bytes - data
+        // 4(int) + 2(short) + 1(byte) + 1(byte) = 8 total
+        out.writeBytes( in.readBytes( 8 ) );
+
         int blockType = in.readShort();
-        out.writeInt( x );
-        out.writeShort( y );
-        out.writeInt( z );
-        out.writeByte( b1 );
-        out.writeByte( b2 );
         Var.writeVarInt( blockType, out );
     }
 

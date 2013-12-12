@@ -64,7 +64,9 @@ public class ProxyPingEvent extends Event
         this.response = resp;
         if ( this.isNewProtocol )
         {
-            this.newResponse = resp.toNewServerPing();
+            NewServerPing newResponse = resp.toNewServerPing();
+            newResponse.setFavicon( this.newResponse.getFavicon() );
+            this.newResponse = newResponse;
         }
     }
 }

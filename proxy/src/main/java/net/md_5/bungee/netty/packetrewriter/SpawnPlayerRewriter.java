@@ -17,22 +17,12 @@ public class SpawnPlayerRewriter extends PacketRewriter
     {
         int entityId = in.readInt();
         String name = Var.readString( in, false );
-        int x = in.readInt();
-        int y = in.readInt();
-        int z = in.readInt();
-        byte yaw = in.readByte();
-        byte pitch = in.readByte();
-        short currentItem = in.readShort();
-
         Var.writeVarInt( entityId, out );
         Var.writeString( "wowe_such_packet", out, true );
         Var.writeString( name, out, true );
-        out.writeInt( x );
-        out.writeInt( y );
-        out.writeInt( z );
-        out.writeByte( yaw );
-        out.writeByte( pitch );
-        out.writeShort( currentItem );
+
+        out.writeBytes( in.readBytes( 16 ) ); // int - x, int - y, int - z, byte - yaw, byte - pitch, short - item
+
         Var.rewriteEntityMetadata( in, out );
     }
 

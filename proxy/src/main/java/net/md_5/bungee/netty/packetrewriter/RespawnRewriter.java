@@ -15,15 +15,12 @@ public class RespawnRewriter extends PacketRewriter
     @Override
     public void rewriteServerToClient(ByteBuf in, ByteBuf out)
     {
-        int dimention = in.readInt();
-        byte difficulty = in.readByte();
-        byte gamemode = in.readByte();
-        in.readShort(); // Ignore world height
-        String levelType = Var.readString( in, false );
+        // int - dimention, byte - difficulty, byte - gamemode
+        // 4(int) + 1(byte) + 1(byte) = total 6 bytes
+        out.writeBytes( in.readBytes( 6 ) );
+        in.skipBytes( 2 ); // Ignore world height - short
 
-        out.writeInt( dimention );
-        out.writeByte( difficulty );
-        out.writeByte( gamemode );
+        String levelType = Var.readString( in, false );
         Var.writeString( levelType, out, true );
     }
 

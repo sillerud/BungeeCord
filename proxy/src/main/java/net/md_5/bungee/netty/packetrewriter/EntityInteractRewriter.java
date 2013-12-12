@@ -9,10 +9,9 @@ public class EntityInteractRewriter extends PacketRewriter
     @Override
     public void rewriteClientToServer(ByteBuf in, ByteBuf out)
     {
-        int target = in.readInt();
+        out.writeInt( 0 ); // Should be ignored by server, its from when the player sent their ID to the server
+        out.writeBytes( in.readBytes( 4 ) ); // int - target
         byte button = in.readByte();
-        out.writeInt( 1234 ); // Should be ignored by server, its from when the player sent their ID to the server
-        out.writeInt( target );
         out.writeBoolean( button == left );
     }
 

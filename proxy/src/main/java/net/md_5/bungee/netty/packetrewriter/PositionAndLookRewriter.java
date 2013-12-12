@@ -7,32 +7,18 @@ public class PositionAndLookRewriter extends PacketRewriter
     @Override
     public void rewriteClientToServer(ByteBuf in, ByteBuf out)
     {
-        double x = in.readDouble();
-        double y = in.readDouble();
-        double stance = in.readDouble();
-        double z = in.readDouble();
-        float yaw = in.readFloat();
-        float pitch = in.readFloat();
-        boolean onGround = in.readBoolean();
-        out.writeDouble( x );
-        out.writeDouble( y );
-        out.writeDouble( stance );
-        out.writeDouble( z );
-        out.writeFloat( yaw );
-        out.writeFloat( pitch );
-        out.writeBoolean( onGround );
+        // double - x, double - y, double - stance, double - z, float - yaw, float - pitch, boolean - onground
+        // 8(double), 8(double), 8(double), 8(double), 4(float), 4(float), 1(boolean) = total 41 bytes
+        // out.writeBytes( in.readBytes( 41 ) );
+        out.writeBytes( in.readBytes( in.readableBytes() ) );
     }
 
     @Override
     public void rewriteServerToClient(ByteBuf in, ByteBuf out)
     {
-        double x = in.readDouble();
-        double y = in.readDouble();
-        in.readDouble(); // Ignore stance.
-        double z = in.readDouble();
-        out.writeDouble( x );
-        out.writeDouble( y );
-        out.writeDouble( z );
+        // double - x, double - y = total 16 bytes
+        out.writeBytes( in.readBytes( 16 ) );
+        in.skipBytes( 8 ); // Ignore stance.
         out.writeBytes( in.readBytes( in.readableBytes() ) );
     }
 }

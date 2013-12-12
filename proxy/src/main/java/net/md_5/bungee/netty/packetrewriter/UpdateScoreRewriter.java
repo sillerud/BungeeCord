@@ -15,13 +15,15 @@ public class UpdateScoreRewriter extends PacketRewriter {
     public void rewriteServerToClient(ByteBuf in, ByteBuf out)
     {
         String itemName = Var.readString( in, false );
-        byte updateRemove = in.readByte();
-        String scoreboardName = Var.readString( in, false );
-        int value = in.readInt();
         Var.writeString( itemName, out, true );
+
+        byte updateRemove = in.readByte();
         out.writeByte( updateRemove );
+
+        String scoreboardName = Var.readString( in, false );
         Var.writeString( scoreboardName, out, true );
-        out.writeInt( value );
+
+        out.writeBytes(in.readBytes(4)); // int - value
     }
 
 }

@@ -14,27 +14,24 @@ public class EntityPropertiesRewriter extends PacketRewriter
     @Override
     public void rewriteServerToClient(ByteBuf in, ByteBuf out)
     {
-        int entityId = in.readInt();
+        // int - entityid, 4 bytes
+        out.writeBytes( in.readBytes( 4 ) );
         int propertyCount = in.readInt();
-        out.writeInt( entityId );
         out.writeInt( propertyCount );
         for ( int i = 0; i < propertyCount; i++ )
         {
             String key = Var.readString( in, false );
-            double value = in.readDouble();
-            short length = in.readShort();
             Var.writeString( key, out, true );
-            out.writeDouble( value );
+            // double - value
+            // 8(double) = total 8 bytes
+            out.writeBytes( in.readBytes( 8 ) );
+            short length = in.readShort();
             out.writeShort( length );
             for ( int j = 0; j < length; j++ )
             {
-                byte[] uuid = new byte[ 16 ];
-                in.readBytes( uuid );
-                double amount = in.readDouble();
-                byte operation = in.readByte();
-                out.writeBytes( uuid );
-                out.writeDouble( amount );
-                out.writeByte( operation );
+                // mojang UUID - uuid, double - amount, byte - operation
+                // 16(UUID) + 8(double) + 1(byte) = total 25 bytes
+                out.writeBytes( in.readBytes( 25 ) );
             }
         }
     }

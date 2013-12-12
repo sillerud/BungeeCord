@@ -3,6 +3,7 @@ package net.md_5.bungee;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -29,6 +30,7 @@ import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.YamlConfig;
 import net.md_5.bungee.log.BungeeLogger;
 import net.md_5.bungee.log.LoggingOutputStream;
+import net.md_5.bungee.netty.PacketMapping;
 import net.md_5.bungee.netty.PipelineUtils;
 import net.md_5.bungee.protocol.Vanilla;
 import net.md_5.bungee.protocol.packet.DefinedPacket;
@@ -39,6 +41,7 @@ import net.md_5.bungee.reconnect.YamlReconnectHandler;
 import net.md_5.bungee.scheduler.BungeeScheduler;
 import net.md_5.bungee.tab.Custom;
 import net.md_5.bungee.util.CaseInsensitiveMap;
+import net.md_5.bungee.util.ChatConverter;
 import org.fusesource.jansi.AnsiConsole;
 
 import java.io.File;
@@ -109,6 +112,7 @@ public class BungeeCord extends ProxyServer
     public final Gson gson = new Gson();
     @Getter
     private ConnectionThrottle connectionThrottle;
+    private final JsonParser JSON_PARSER = new JsonParser();
 
     
     {
@@ -467,9 +471,17 @@ public class BungeeCord extends ProxyServer
     public void broadcast(String message)
     {
         getConsole().sendMessage( message );
-        // TODO: Here too
-        String encoded = BungeeCord.getInstance().gson.toJson( message );
-        broadcast( new Packet3Chat( "{\"text\":" + encoded + "}" ) );
+        connectionLock.readLock().lock();
+        try
+        {
+            for ( UserConnection con : connections.values() )
+            {
+                con.sendMessage( message );
+            }
+        } finally
+        {
+            connectionLock.readLock().unlock();
+        }
     }
 
     public void addConnection(UserConnection con)

@@ -34,19 +34,17 @@ public class JoinGameRewriter extends PacketRewriter
     @Override
     public void rewriteServerToClient(ByteBuf in, ByteBuf out)
     {
-        int entityId = in.readInt();
+        // entityid - int
+        // 4 bytes
+        out.writeBytes( in.readBytes( 4 ) );
         String levelType = Var.readString( in, false );
-        byte gameMode = in.readByte();
-        byte dimention = in.readByte();
-        byte difficulty = in.readByte();
-        in.readByte();
-        byte maxPlayers = in.readByte();
+        // gamemode - byte, dimention - byte, difficulty
+        // 1(byte) + 1(byte) + 1(byte) = total 3 bytes
+        out.writeBytes( in.readBytes( 3 ) );
+        in.skipBytes( 1 );
 
-        out.writeInt( entityId );
-        out.writeByte( gameMode );
-        out.writeByte( dimention );
-        out.writeByte( difficulty );
-        out.writeByte( maxPlayers );
+        out.writeBytes( in.readBytes( 1 ) ); // maxPlayers
+
         Var.writeString( levelType, out, true );
     }
 

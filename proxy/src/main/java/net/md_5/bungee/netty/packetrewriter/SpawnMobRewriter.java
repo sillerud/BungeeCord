@@ -16,28 +16,15 @@ public class SpawnMobRewriter extends PacketRewriter
     public void rewriteServerToClient(ByteBuf in, ByteBuf out)
     {
         int entityId = in.readInt();
-        byte type = in.readByte();
-        int x = in.readInt();
-        int y = in.readInt();
-        int z = in.readInt();
-        byte pitch = in.readByte();
-        byte headPitch = in.readByte();
-        byte yaw = in.readByte();
-        short velX = in.readShort();
-        short velY = in.readShort();
-        short velZ = in.readShort();
-
         Var.writeVarInt( entityId, out );
-        out.writeByte( type );
-        out.writeInt( x );
-        out.writeInt( y );
-        out.writeInt( z );
-        out.writeByte( pitch );
-        out.writeByte( headPitch );
-        out.writeByte( yaw );
-        out.writeShort( velX );
-        out.writeShort( velY );
-        out.writeShort( velZ );
+
+        /*
+         byte - type, int - x, int - y, int - z, byte - pitch, byte - headpitch, byte - yaw
+         short velocity x, short velocity y, short velocity z
+         1(byte) + 4(int) + 4(int) + 1(byte) + 1(byte) + 1(byte) + 2(short) + 2(short) + 2(short) = total 18 bytes
+          */
+        out.writeBytes( in.readBytes( 18 ) );
+
         Var.rewriteEntityMetadata( in, out );
     }
 

@@ -15,16 +15,12 @@ public class BlockChangeRewriter extends PacketRewriter
     @Override
     public void rewriteServerToClient(ByteBuf in, ByteBuf out)
     {
-        int x = in.readInt();
-        byte y = in.readByte();
-        int z = in.readInt();
+        // int - x, byte - y, int - z
+        // 4(int) + 1(byte) + 4(int) = total 9 bytes
+        out.writeBytes( in.readBytes( 9 ) );
         short blockType = in.readShort();
-        byte blockData = in.readByte();
-        out.writeInt( x );
-        out.writeByte( y );
-        out.writeInt( z );
         Var.writeVarInt( blockType, out );
-        out.writeByte( blockData );
+        out.writeBytes( in.readBytes( 1 ) ); // Block data
     }
 
 }

@@ -1,6 +1,7 @@
 package net.md_5.bungee;
 
 import com.google.common.base.Preconditions;
+import com.google.gson.JsonParser;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -16,13 +17,12 @@ import net.md_5.bungee.api.event.PermissionCheckEvent;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.score.Scoreboard;
 import net.md_5.bungee.api.tab.TabListHandler;
+import net.md_5.bungee.connection.CancelSendSignal;
 import net.md_5.bungee.connection.InitialHandler;
-import net.md_5.bungee.netty.ChannelWrapper;
-import net.md_5.bungee.netty.HandlerBoss;
-import net.md_5.bungee.netty.PacketWrapper;
-import net.md_5.bungee.netty.PipelineUtils;
+import net.md_5.bungee.netty.*;
 import net.md_5.bungee.protocol.packet.*;
 import net.md_5.bungee.util.CaseInsensitiveSet;
+import net.md_5.bungee.util.ChatConverter;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -97,6 +97,7 @@ public final class UserConnection implements ProxiedPlayer
             ch.write( packet );
         }
     };
+    private final JsonParser JSON_PARSER = new JsonParser();
 
     public void init()
     {
@@ -266,7 +267,17 @@ public final class UserConnection implements ProxiedPlayer
     {
         // TODO: Fix this
         String encoded = BungeeCord.getInstance().gson.toJson( message );
-        unsafe().sendPacket( new Packet3Chat( "{\"text\":" + encoded + "}" ) );
+        String toSend = "{\"text\":" + encoded + "}";
+        if ( getProtocolVersion() >= PacketMapping.supported17Start && getProtocolVersion() <= PacketMapping.supported17End )
+        {
+            for ( Packet3Chat c : ChatConverter.fixJSONChat( JSON_PARSER.parse( toSend ).getAsJsonObject() ) )
+            {
+                unsafe().sendPacket( c );
+            }
+        } else
+        {
+            unsafe().sendPacket( new Packet3Chat( toSend ) );
+        }
     }
 
     @Override

@@ -9,14 +9,13 @@ public class PluginMessageRewriter extends PacketRewriter
     @Override
     public void rewriteClientToServer(ByteBuf in, ByteBuf out)
     {
-        String channel = Var.readString( in, true );
-        short length = in.readShort();
-        byte[] content = new byte[ length ];
-        in.readBytes(content);
-
+        String channel = Var.readString(in, true);
         Var.writeString( channel, out, false );
-        out.writeShort( length );
-        out.writeBytes( content );
+
+        short length = in.readShort();
+        out.writeShort(length);
+
+        out.writeBytes( in.readBytes( length ) );
     }
 
     @Override

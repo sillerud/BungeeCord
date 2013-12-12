@@ -15,7 +15,7 @@ public class EntityMetadataRewriter extends PacketRewriter
     @Override
     public void rewriteServerToClient(ByteBuf in, ByteBuf out)
     {
-        out.writeInt( in.readInt() ); // Write entity id
+        out.writeBytes( in.readBytes( 4 ) ); // Write entity id - int
         Var.rewriteEntityMetadata( in, out );
     }
 
