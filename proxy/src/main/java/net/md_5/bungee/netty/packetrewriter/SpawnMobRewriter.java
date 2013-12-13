@@ -21,9 +21,9 @@ public class SpawnMobRewriter extends PacketRewriter
         /*
          byte - type, int - x, int - y, int - z, byte - pitch, byte - headpitch, byte - yaw
          short velocity x, short velocity y, short velocity z
-         1(byte) + 4(int) + 4(int) + 1(byte) + 1(byte) + 1(byte) + 2(short) + 2(short) + 2(short) = total 18 bytes
+         1(byte) + 4(int) + 4(int) + 4(int) + 1(byte) + 1(byte) + 1(byte) + 2(short) + 2(short) + 2(short) = total 18 bytes
           */
-        out.writeBytes( in.readBytes( 18 ) );
+        out.writeBytes( in.readBytes( 22 ) );
 
         Var.rewriteEntityMetadata( in, out );
     }
