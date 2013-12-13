@@ -16,8 +16,8 @@ public class BlockActionRewriter extends PacketRewriter
     public void rewriteServerToClient(ByteBuf in, ByteBuf out)
     {
         // x - int, y - short, z - int, 2 bytes - data
-        // 4(int) + 2(short) + 1(byte) + 1(byte) = 8 total
-        out.writeBytes( in.readBytes( 8 ) );
+        // 4(int) + 2(short)+ 4(int) + 1(byte) + 1(byte) = 12 total
+        out.writeBytes( in.readBytes( 12 ) );
 
         int blockType = in.readShort();
         Var.writeVarInt( blockType, out );
