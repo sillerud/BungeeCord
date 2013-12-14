@@ -25,12 +25,12 @@ public class TeamsRewriter extends PacketRewriter
             String displayName = Var.readString( in, false );
             String teamPrefix = Var.readString( in, false );
             String teamSuffix = Var.readString( in, false );
-            boolean friendlyFire = in.readBoolean();
+            byte friendlyFire = in.readByte();
 
             Var.writeString( displayName, out, true );
             Var.writeString( teamPrefix, out, true );
             Var.writeString( teamSuffix, out, true );
-            out.writeBoolean( friendlyFire );
+            out.writeByte( friendlyFire );
         }
 
         if ( mode == 0 || mode == 3 || mode == 4 )
