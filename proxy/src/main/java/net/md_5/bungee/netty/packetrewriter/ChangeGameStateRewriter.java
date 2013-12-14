@@ -15,6 +15,11 @@ public class ChangeGameStateRewriter extends PacketRewriter
     {
         byte reason = in.readByte();
         byte gameMode = in.readByte();
+        
+        //Change Weather
+        if ( reason == (byte) 1 ) reason = 2;
+        else if ( reason == (byte) 2) reason = 1;
+        
         out.writeByte( reason );
         out.writeFloat( gameMode );
     }
