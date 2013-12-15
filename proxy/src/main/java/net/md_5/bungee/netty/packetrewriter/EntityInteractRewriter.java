@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 public class EntityInteractRewriter extends PacketRewriter
 {
 
-    byte left = 0;
+    byte left = 1;
     @Override
     public void rewriteClientToServer(ByteBuf in, ByteBuf out)
     {
