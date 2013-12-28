@@ -1,5 +1,7 @@
 package net.md_5.bungee.netty;
 
+import java.util.Map;
+import java.util.HashMap;
 import io.netty.buffer.ByteBuf;
 import net.md_5.bungee.netty.packetrewriter.*;
 import net.md_5.bungee.protocol.packet.DefinedPacket;
@@ -29,6 +31,11 @@ public class PacketMapping {
      * Statistics mapping, 1.6.4->1.7.2
      */
     public static String[] statistics = new String[ 2029 ];
+    
+    /**
+     * Sound mapping, 1.6.4->1.7.2
+     */
+    public static Map<String, String> sounds = new HashMap<String, String>();
 
     public static int supported16Start = 74;
     public static int supported16End = 80;
@@ -168,6 +175,34 @@ public class PacketMapping {
         statistics[ 2026 ] = "stat.junkFished";
         statistics[ 2027 ] = "stat.treasureFished";
         statistics[ 2028 ] = "stat.animalsBred"; // Not on wiki, and no really fitting ids
+        
+        sounds.put( "damage.hit"			, "game.neutral.hurt" );
+        sounds.put( "damage.fallbig"		, "game.neutral.hurt.fall.big" );
+        sounds.put( "damage.fallsmall"		, "game.neutral.hurt.fall.small" );
+        sounds.put( "liquid.splash"			, "game.neutral.swim.splash" );
+        sounds.put( "liquid.swim"			, "game.neutral.swim" );
+        sounds.put( "horse.angry"			, "mob.horse.angry" );
+        sounds.put( "horse.armor"			, "mob.horse.armor" );
+        sounds.put( "horse.breathe"			, "mob.horse.breathe" );
+        sounds.put( "horse.gallop"			, "mob.horse.gallop" );
+        sounds.put( "horse.hit"				, "mob.horse.hit" );
+        sounds.put( "horse.idle"			, "mob.horse.idle" );
+        sounds.put( "horse.jump"			, "mob.horse.jump" );
+        sounds.put( "horse.land"			, "mob.horse.land" );
+        sounds.put( "horse.leather"			, "mob.horse.leather" );
+        sounds.put( "horse.soft"			, "mob.horse.soft" );
+        sounds.put( "horse.wood"			, "mob.horse.wood" );
+        sounds.put( "horse.donkey.angry"	, "mob.horse.donkey.angry" );
+        sounds.put( "horse.donkey.death"	, "mob.horse.donkey.death" );
+        sounds.put( "horse.donkey.hit"		, "mob.horse.donkey.hit" );
+        sounds.put( "horse.donkey.idle"		, "mob.horse.donkey.idle" );
+        sounds.put( "horse.skeleton.death"	, "mob.horse.skeleton.death" );
+        sounds.put( "horse.skeleton.idle"	, "mob.horse.skeleton.idle" );
+        sounds.put( "horse.zombie.death"	, "mob.horse.zombie.death" );
+        sounds.put( "horse.zombie.hit"		, "mob.horse.zombie.hit" );
+        sounds.put( "horse.zombie.idle"		, "mob.horse.zombie.idle" );
+        sounds.put( "random.fuse"			, "creeper.primed" );
+        sounds.put( "random.glass"			, "dig.glass" );
 
         itemIdMapping[ 26 ] = 355; // Bed
         itemIdMapping[ 34 ] = 33; // Piston "arm"
