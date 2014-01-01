@@ -138,13 +138,21 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                 result = bungee.getPluginManager().callEvent( new ProxyPingEvent( InitialHandler.this, result ) ).getResponse();
 
                 String kickMessage = ChatColor.DARK_BLUE
-                        + "\00" + result.getProtocolVersion()
-                        + "\00" + result.getGameVersion()
+                        + "\00" + getProtocolVersion()
+                        + "\00" + bungee.getGameVersion()
                         + "\00" + result.getMotd()
                         + "\00" + result.getCurrentPlayers()
                         + "\00" + result.getMaxPlayers();
                 BungeeCord.getInstance().getConnectionThrottle().unthrottle( getAddress().getAddress() );
                 disconnect( kickMessage );
+            }
+            
+            public byte getProtocolVersion(){
+                if(pingVersion <= PacketMapping.supported16End && pingVersion >= PacketMapping.supported16Start)
+                {
+                    return pingVersion;
+                }
+                return bungee.getProtocolVersion();
             }
         };
 
@@ -153,11 +161,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
             forced.ping( pingBack );
         } else
         {
-            if ( pingVersion <= PacketMapping.supported16End && pingVersion >= PacketMapping.supported16Start ) {
-                pingBack.done( new ServerPing( pingVersion, bungee.getGameVersion(), motd, bungee.getOnlineCount(), listener.getMaxPlayers()) , null );
-            } else {
-                pingBack.done( new ServerPing( bungee.getProtocolVersion(), bungee.getGameVersion(), motd, bungee.getOnlineCount(), listener.getMaxPlayers() ), null );
-            }
+            pingBack.done( new ServerPing( -1, "", motd, bungee.getOnlineCount(), listener.getMaxPlayers() ), null );
         }
     }
 
@@ -191,6 +195,9 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                             new NewServerPing.Players( -1, -1, null ),
                             "Error pinging remote server: " + Util.exception( error ),
                             null );
+                }else
+                {
+                    result.setVersion(new NewServerPing.Protocol(bungee.getGameVersion(), pingVersion));
                 }
 
                 result = bungee.getPluginManager().callEvent( new ProxyPingEvent( InitialHandler.this, result ) ).getNewResponse();
@@ -206,7 +213,18 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                 @Override
                 public void done(ServerPing result, Throwable error)
                 {
-                    pingBack.done( result.toNewServerPing(), error );
+                    NewServerPing ping;
+                    if ( error != null )
+                    {
+                    ping = new NewServerPing( new NewServerPing.Protocol( "-1", -1 ),
+                            new NewServerPing.Players( -1, -1, null ),
+                            "Error pinging remote server: " + Util.exception( error ),
+                            null );
+                    } else
+                    {
+                        ping = result.toNewServerPing();
+                    }
+                    pingBack.done( ping, error );
                 }
             } );
         } else
