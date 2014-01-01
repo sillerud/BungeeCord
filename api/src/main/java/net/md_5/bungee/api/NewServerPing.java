@@ -93,4 +93,8 @@ public class NewServerPing
 
         return json;
     }
+    
+    public void setVersion(Protocol version){
+        this.version = version;
+    }
 }
