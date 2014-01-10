@@ -89,6 +89,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
     @Override
     public void exception(Throwable t) throws Exception
     {
+        // TODO: somehow get the correct disconnect method here
         disconnect( ChatColor.RED + Util.exception( t ) );
     }
 
@@ -262,7 +263,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
 
         if ( ver17handshake.getProtocolVersion() > PacketMapping.supported17End )
         {
-            disconnect( bungee.getTranslation( "outdated_server" ) );
+            disconnect17( bungee.getTranslation( "outdated_server" ) );
         } else if ( ver17handshake.getProtocolVersion() < PacketMapping.supported17Start )
         {
             disconnect( bungee.getTranslation( "outdated_client" ) );
@@ -270,21 +271,21 @@ public class InitialHandler extends PacketHandler implements PendingConnection
 
         if ( loginStart.getUser().length() > 16 )
         {
-            disconnect( "Cannot have username longer than 16 characters" );
+            disconnect17( "Cannot have username longer than 16 characters" );
             return;
         }
 
         int limit = BungeeCord.getInstance().config.getPlayerLimit();
         if ( limit > 0 && bungee.getOnlineCount() > limit )
         {
-            disconnect( bungee.getTranslation( "proxy_full" ) );
+            disconnect17( bungee.getTranslation( "proxy_full" ) );
             return;
         }
 
         // If offline mode and they are already on, don't allow connect
         if ( !isOnlineMode() && bungee.getPlayer( handshake.getUsername() ) != null )
         {
-            disconnect( bungee.getTranslation( "already_connected" ) );
+            disconnect17( bungee.getTranslation( "already_connected" ) );
             return;
         }
 
@@ -435,11 +436,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                             finish( true );
                         } else
                         {
-                            disconnect( "Not authenticated with Minecraft.net" );
+                            disconnect17( "Not authenticated with Minecraft.net" );
                         }
                     } else
                     {
-                        disconnect( bungee.getTranslation( "mojang_fail" ) );
+                        disconnect17( bungee.getTranslation( "mojang_fail" ) );
                         bungee.getLogger().log( Level.SEVERE, "Error authenticating " + getName() + " with minecraft.net", error );
                     }
                 }
@@ -468,7 +469,14 @@ public class InitialHandler extends PacketHandler implements PendingConnection
             {
                 if ( result.isCancelled() )
                 {
-                    disconnect( result.getCancelReason() );
+                    if (ver17)
+                    {
+                        disconnect17( result.getCancelReason() );
+                    }
+                    else
+                    {
+                        disconnect( result.getCancelReason() );
+                    }
                 }
                 if ( ch.isClosed() )
                 {
@@ -510,7 +518,14 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                                 }
                             } catch ( GeneralSecurityException ex )
                             {
-                                disconnect( "Cipher error: " + Util.exception( ex ) );
+                                if (ver17)
+                                {
+                                    disconnect17( "Cipher error: " + Util.exception( ex ) );
+                                }
+                                else
+                                {
+                                    disconnect( "Cipher error: " + Util.exception( ex ) );
+                                }
                             }
                         }
                     }
@@ -554,6 +569,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
         if ( !ch.isClosed() )
         {
             unsafe().sendPacket( new PacketFFKick( reason ) );
+            ch.close();
+        }
+    }
+
+    public synchronized void disconnect17(String reason)
+    {
+        if ( !ch.isClosed() )
+        {
+            unsafe().sendPacket( new PacketKick( reason ) );
             ch.close();
         }
     }
