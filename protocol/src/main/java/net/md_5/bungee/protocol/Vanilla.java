@@ -16,7 +16,7 @@ public class Vanilla implements Protocol
     public static int lastPacket = 0;
 
     public static final byte PROTOCOL_VERSION = 78;
-    public static final String GAME_VERSION = "1.6.2-1.7.4";
+    public static final String GAME_VERSION = "1.6.2-1.7.9";
     @Getter
     private static final Vanilla instance = new Vanilla();
     /*========================================================================*/

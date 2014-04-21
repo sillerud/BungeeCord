@@ -136,6 +136,11 @@ public final class UserConnection implements ProxiedPlayer
         return !ch.isClosed();
     }
 
+    public boolean isChannel(Channel channel)
+    {
+        return ch.getHandle().equals( channel );
+    }
+
     @Override
     public void setDisplayName(String name)
     {
