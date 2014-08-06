@@ -1,45 +1,44 @@
 package net.md_5.bungee.protocol.packet.protocolhack;
 
 import io.netty.buffer.ByteBuf;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import net.md_5.bungee.protocol.packet.AbstractPacketHandler;
 
-import java.util.UUID;
+@Getter
+@ToString
+@EqualsAndHashCode(callSuper = false)
+public class PacketLoginSuccess extends Defined172Packet
+{
 
-public class PacketLoginSuccess extends Defined172Packet {
-    String name;
-    public PacketLoginSuccess(String name) {
+    private String uuid;
+    private String username;
+
+    public PacketLoginSuccess(String uuid, String username)
+    {
         super( 0x02 );
-        this.name = name;
+        this.uuid = uuid;
+        this.username = username;
     }
 
     @Override
-    public void read(ByteBuf buf) {
-
+    public void read(ByteBuf buf)
+    {
+        uuid = readString( buf, true );
+        username = readString( buf, true );
     }
 
     @Override
-    public void write(ByteBuf buf) {
-        writeString( UUID.randomUUID().toString(), buf, true );
-        writeString( name, buf, true );
+    public void write(ByteBuf buf)
+    {
+        writeString( uuid, buf, true );
+        writeString( username, buf, true );
     }
 
     @Override
-    public void handle(AbstractPacketHandler handler) throws Exception {
-
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return 0;
-    }
-
-    @Override
-    public String toString() {
-        return "UUID:" + "cake" + ", NAME:" + name;
+    public void handle(AbstractPacketHandler handler) throws Exception
+    {
+        handler.handle( this );
     }
 }

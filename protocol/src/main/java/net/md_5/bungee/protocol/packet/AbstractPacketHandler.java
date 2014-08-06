@@ -100,4 +100,8 @@ public abstract class AbstractPacketHandler
     public void handle(PacketHandshake handshake) throws Exception
     {
     }
+
+    public void handle(PacketLoginSuccess loginSuccess) throws Exception
+    {
+    }
 }

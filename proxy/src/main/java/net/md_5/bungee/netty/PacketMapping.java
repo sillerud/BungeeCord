@@ -34,7 +34,7 @@ public class PacketMapping {
     public static int supported16End = 80;
 
     public static int supported17Start = 1;
-    public static int supported17End = 4;
+    public static int supported17End = 5;
 
     public static short[] itemIdMapping = new short[ Short.MAX_VALUE ];
 

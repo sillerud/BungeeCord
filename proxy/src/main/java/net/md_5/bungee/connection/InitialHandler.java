@@ -1,5 +1,6 @@
 package net.md_5.bungee.connection;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import io.netty.util.concurrent.ScheduledFuture;
 import lombok.Getter;
@@ -33,6 +34,7 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -66,6 +68,12 @@ public class InitialHandler extends PacketHandler implements PendingConnection
     };
     @Getter
     private boolean onlineMode = BungeeCord.getInstance().config.isOnlineMode();
+    @Getter
+    private UUID uniqueId;
+    @Getter
+    private UUID offlineId;
+    @Getter
+    private LoginResult loginProfile;
     private ScheduledFuture<?> pingFuture;
     private InetSocketAddress vHost;
     private PacketLoginStart loginstart;
@@ -73,7 +81,6 @@ public class InitialHandler extends PacketHandler implements PendingConnection
     PacketHandshake ver17handshake;
     byte pingVersion = -1;
     byte clientVersion = -1;
-    String UUID;
 
     private enum State
     {
@@ -116,10 +123,10 @@ public class InitialHandler extends PacketHandler implements PendingConnection
         // TODO: Unregister?
         if ( pluginMessage.getTag().equals( "REGISTER" ) )
         {
-            registerMessages.add(pluginMessage);
+            registerMessages.add( pluginMessage );
         } else
         {
-            loginMessages.add(pluginMessage);
+            loginMessages.add( pluginMessage );
         }
     }
 
@@ -155,9 +162,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
             forced.ping( pingBack );
         } else
         {
-            if ( pingVersion <= PacketMapping.supported16End && pingVersion >= PacketMapping.supported16Start ) {
-                pingBack.done( new ServerPing( pingVersion, bungee.getGameVersion(), motd, bungee.getOnlineCount(), listener.getMaxPlayers()) , null );
-            } else {
+            if ( pingVersion <= PacketMapping.supported16End && pingVersion >= PacketMapping.supported16Start )
+            {
+                pingBack.done( new ServerPing( pingVersion, bungee.getGameVersion(), motd, bungee.getOnlineCount(), listener.getMaxPlayers() ), null );
+            } else
+            {
                 pingBack.done( new ServerPing( bungee.getProtocolVersion(), bungee.getGameVersion(), motd, bungee.getOnlineCount(), listener.getMaxPlayers() ), null );
             }
         }
@@ -247,27 +256,31 @@ public class InitialHandler extends PacketHandler implements PendingConnection
     }
 
     @Override
-    public void handle(PacketHandshake handshake) {
+    public void handle(PacketHandshake handshake)
+    {
         Preconditions.checkState( thisState == State.HANDSHAKE, "Not expecting HANDSHAKE" );
-        pingVersion = (byte)handshake.getProtocolVersion();
-        clientVersion = (byte)handshake.getProtocolVersion();
+        pingVersion = (byte) handshake.getProtocolVersion();
+        clientVersion = (byte) handshake.getProtocolVersion();
         this.vHost = new InetSocketAddress( handshake.getServerAddress(), handshake.getServerPort() );
         this.ver17handshake = handshake;
     }
 
     @Override
-    public void handle(PacketLoginStart loginStart) {
+    public void handle(PacketLoginStart loginStart)
+    {
         loginstart = loginStart;
-        handshake = new Packet2Handshake( (byte)78, loginstart.getUser(), ver17handshake.getServerAddress(), ver17handshake.getServerPort() );
+        handshake = new Packet2Handshake( (byte) 78, loginstart.getUser(), ver17handshake.getServerAddress(), ver17handshake.getServerPort() );
 
         bungee.getPluginManager().callEvent( new PlayerHandshakeEvent( InitialHandler.this, handshake ) );
 
         if ( ver17handshake.getProtocolVersion() > PacketMapping.supported17End )
         {
             disconnect17( bungee.getTranslation( "outdated_server" ) );
+            return;
         } else if ( ver17handshake.getProtocolVersion() < PacketMapping.supported17Start )
         {
             disconnect( bungee.getTranslation( "outdated_client" ) );
+            return;
         }
 
         if ( loginStart.getUser().length() > 16 )
@@ -292,7 +305,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
 
         if ( this.onlineMode )
         {
-            unsafe().sendPacket(request172 = EncryptionUtil.encryptRequest172(this.onlineMode)); // packet mapping should take care of this
+            unsafe().sendPacket( request172 = EncryptionUtil.encryptRequest172( this.onlineMode ) ); // packet mapping should take care of this
             thisState = State.ENCRYPT;
         } else
         {
@@ -307,7 +320,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
         Preconditions.checkState( thisState == State.HANDSHAKE, "Not expecting HANDSHAKE" );
         this.handshake = handshake;
         this.vHost = new InetSocketAddress( handshake.getHost(), handshake.getPort() );
-        bungee.getLogger().log( Level.INFO, "{0} has connected", this );
+        bungee.getLogger().log( Level.INFO, "{0} has connected with Protocol: " + handshake.getProtocolVersion(), this );
 
         bungee.getPluginManager().callEvent( new PlayerHandshakeEvent( InitialHandler.this, handshake ) );
 
@@ -325,7 +338,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
             return;
         }
 
-        handshake.setProtocolVersion( (byte)78 );
+        handshake.setProtocolVersion( (byte) 78 );
         int limit = BungeeCord.getInstance().config.getPlayerLimit();
         if ( limit > 0 && bungee.getOnlineCount() > limit )
         {
@@ -380,15 +393,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                 {
                     if ( error == null )
                     {
-                        AuthResult authResult = BungeeCord.getInstance().gson.fromJson( result, AuthResult.class );
-                        if ( authResult != null )
+                        LoginResult obj = BungeeCord.getInstance().gson.fromJson( result, LoginResult.class );
+                        if ( obj != null )
                         {
-                            UUID = authResult.getId();
+                            loginProfile = obj;
+                            uniqueId = Util.getUUID( obj.getId() );
                             finish( false );
-                        } else
-                        {
-                            disconnect( "Not authenticated with Minecraft.net" );
+                            return;
                         }
+                        disconnect( "Not authenticated with Minecraft.net" );
                     } else
                     {
                         disconnect( bungee.getTranslation( "mojang_fail" ) );
@@ -405,7 +418,8 @@ public class InitialHandler extends PacketHandler implements PendingConnection
     }
 
     @Override
-    public void handle(PacketEncryptionResponse encryptionResponse) throws Exception {
+    public void handle(PacketEncryptionResponse encryptionResponse) throws Exception
+    {
         Preconditions.checkState( thisState == State.ENCRYPT, "Not expecting ENCRYPT" );
 
         sharedKey = EncryptionUtil.getSecret( encryptionResponse, request172 );
@@ -418,9 +432,9 @@ public class InitialHandler extends PacketHandler implements PendingConnection
 
             MessageDigest sha = MessageDigest.getInstance( "SHA-1" );
             for ( byte[] bit : new byte[][]
-                    {
-                            request172.getServerId().getBytes( "ISO_8859_1" ), sharedKey.getEncoded(), EncryptionUtil.keys.getPublic().getEncoded()
-                    } )
+            {
+                request172.getServerId().getBytes( "ISO_8859_1" ), sharedKey.getEncoded(), EncryptionUtil.keys.getPublic().getEncoded()
+            } )
             {
                 sha.update( bit );
             }
@@ -435,15 +449,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                 {
                     if ( error == null )
                     {
-                        AuthResult authResult = BungeeCord.getInstance().gson.fromJson( result, AuthResult.class );
-                        if ( authResult != null )
+                        LoginResult obj = BungeeCord.getInstance().gson.fromJson( result, LoginResult.class );
+                        if ( obj != null )
                         {
-                            UUID = authResult.getId();
+                            loginProfile = obj;
+                            uniqueId = Util.getUUID( obj.getId() );
                             finish( true );
-                        } else
-                        {
-                            disconnect17( "Not authenticated with Minecraft.net" );
+                            return;
                         }
+                        disconnect17( "Not authenticated with Minecraft.net" );
                     } else
                     {
                         disconnect17( bungee.getTranslation( "mojang_fail" ) );
@@ -503,18 +517,30 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                                 }
                                 if ( ver17 )
                                 {
-                                    if ( result.isCancelled())
+                                    if ( result.isCancelled() )
                                     {
                                         disconnect17( result.getCancelReason() );
                                     } else
                                     {
-                                        unsafe.sendPacket( new PacketLoginSuccess( getName() ) );
+                                        offlineId = java.util.UUID.nameUUIDFromBytes( ( "OfflinePlayer:" + getName() ).getBytes( Charsets.UTF_8 ) );
+                                        if ( uniqueId == null )
+                                        {
+                                            uniqueId = offlineId;
+                                        }
+                                        // Version 5 == 1.7.6. This is a screwup as 1.7.6 was also a snapshot.
+                                        if ( ver17handshake.getProtocolVersion() == 5 )
+                                        {
+                                            unsafe.sendPacket( new PacketLoginSuccess( getUniqueId().toString(), getName() ) ); // With dashes in between
+                                        } else
+                                        {
+                                            unsafe.sendPacket( new PacketLoginSuccess( getUUID(), getName() ) ); // Without dashes, for older clients.
+                                        }
                                         try
                                         {
                                             handle( new PacketCDClientStatus( (byte) 0 ) );
                                         } catch ( CancelSendSignal e )
                                         {
-    
+
                                         } catch ( Exception e )
                                         {
                                             e.printStackTrace();
@@ -523,11 +549,10 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                                 }
                             } catch ( GeneralSecurityException ex )
                             {
-                                if (ver17)
+                                if ( ver17 )
                                 {
                                     disconnect17( "Cipher error: " + Util.exception( ex ) );
-                                }
-                                else
+                                } else
                                 {
                                     disconnect( "Cipher error: " + Util.exception( ex ) );
                                 }
@@ -617,10 +642,17 @@ public class InitialHandler extends PacketHandler implements PendingConnection
         return unsafe;
     }
 
+    @Override
     public void setOnlineMode(boolean onlineMode)
     {
         Preconditions.checkState( thisState == State.HANDSHAKE, "Can only set online mode status whilst handshaking" );
         this.onlineMode = onlineMode;
+    }
+
+    @Override
+    public String getUUID()
+    {
+        return uniqueId.toString().replaceAll( "-", "" );
     }
 
     @Override

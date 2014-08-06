@@ -402,6 +402,25 @@ public class BungeeCord extends ProxyServer
         }
     }
 
+    public ProxiedPlayer getPlayer(Channel channel)
+    {
+        connectionLock.readLock().lock();
+        try
+        {
+            for ( UserConnection connection : connections.values() )
+            {
+                if ( connection.isChannel( channel ) )
+                {
+                    return connection;
+                }
+            }
+            return null;
+        } finally
+        {
+            connectionLock.readLock().unlock();
+        }
+    }
+
     @Override
     public Map<String, ServerInfo> getServers()
     {
@@ -517,7 +536,8 @@ public class BungeeCord extends ProxyServer
     }
 
     @Override
-    public String getFavicon() {
+    public String getFavicon()
+    {
         return config.getFavicon();
     }
 }
