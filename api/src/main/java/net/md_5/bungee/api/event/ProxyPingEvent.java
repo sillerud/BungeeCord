@@ -36,6 +36,10 @@ public class ProxyPingEvent extends Event
      * Specifies if this ping event was caused by a 1.7.2 client.
      */
     private boolean isNewProtocol;
+    /**
+     * The Playerlist to send. (for 1.7 pings)
+     */
+    private String[] players;
 
     public ProxyPingEvent(final PendingConnection connection, final ServerPing response)
     {
@@ -43,6 +47,7 @@ public class ProxyPingEvent extends Event
         this.response = response;
         this.newResponse = null;
         this.isNewProtocol = false;
+        this.players = null;
     }
 
     public ProxyPingEvent(final PendingConnection connection, final NewServerPing newResponse)
@@ -51,6 +56,7 @@ public class ProxyPingEvent extends Event
         this.response = newResponse.toServerPing();
         this.newResponse = newResponse;
         this.isNewProtocol = true;
+        this.players = newResponse.getPlayers().getSample();
     }
 
     public void setResponse(final ServerPing resp)

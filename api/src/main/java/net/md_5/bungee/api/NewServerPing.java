@@ -72,7 +72,7 @@ public class NewServerPing
         jsonPlayers.add( "max", new JsonPrimitive( players.getMax() ) );
         jsonPlayers.add( "online", new JsonPrimitive( players.getOnline() ) );
         JsonArray samplePlayers = new JsonArray();
-        if ( players.sample != null )
+        if ( players.sample != null && players.sample.length != 0 )
         {
             for ( String str : players.sample )
             {

@@ -211,7 +211,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
     public void handle(PacketPingRequest pingRequest)
     {
         ServerInfo forced = AbstractReconnectHandler.getForcedHost( this );
-        final String motd = ( forced != null ) ? forced.getMotd() : listener.getMultilineMotd();
+        final String motd = ( forced != null ) ? forced.getMultilineMotd() : listener.getMultilineMotd();
         final Callback<NewServerPing> pingBack = new Callback<NewServerPing>()
         {
             @Override
@@ -243,9 +243,16 @@ public class InitialHandler extends PacketHandler implements PendingConnection
             } );
         } else
         {
+        	String[] players = new String[bungee.getPlayers().size()];
+        	int i = 0;
+        	for ( ProxiedPlayer player : bungee.getPlayers() )
+        	{
+        		players[i] = player.getDisplayName();
+        		i++;
+        	}
             pingBack.done( new NewServerPing(
                     new NewServerPing.Protocol( bungee.getGameVersion(), pingVersion ), //TODO: There must be a better solution to this
-                    new NewServerPing.Players( listener.getMaxPlayers(), bungee.getOnlineCount(), null ), motd, bungee.getFavicon() ), null );
+                    new NewServerPing.Players( listener.getMaxPlayers(), bungee.getOnlineCount(), players ), motd, bungee.getFavicon() ), null );
         }
         BungeeCord.getInstance().getConnectionThrottle().unthrottle( getAddress().getAddress() );
     }
